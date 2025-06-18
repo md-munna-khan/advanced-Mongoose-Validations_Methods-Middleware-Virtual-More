@@ -1,0 +1,31 @@
+{
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.16.0"
+  },
+  "name": "mongoose-validations-methods",
+  "version": "1.0.0",
+  "description": "GitHub Link: https://github.com/Apollo-Level2-Web-Dev/advanced-note-app-with-mongoose/tree/module-7",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/md-munna-khan/advanced-Mongoose-Validations_Methods-Middleware-Virtual-More.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/md-munna-khan/advanced-Mongoose-Validations_Methods-Middleware-Virtual-More/issues"
+  },
+  "homepage": "https://github.com/md-munna-khan/advanced-Mongoose-Validations_Methods-Middleware-Virtual-More#readme"
+}
