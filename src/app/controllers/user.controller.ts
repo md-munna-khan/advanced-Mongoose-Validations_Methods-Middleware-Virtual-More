@@ -1,30 +1,37 @@
 import express, { Request, Response } from "express";
 import { User } from "../models/user.models";
+import { z } from "zod";
 
-
+const CreateUserZodSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  age: z.number(),
+  email: z.string(),
+  password: z.string(),
+  role: z.string().optional(),
+});
 
 export const userRoutes = express.Router();
 userRoutes.post("/create-user", async (req: Request, res: Response) => {
-  const body = req.body;
-  // approach -1 creating a database
-  //   const myNote = new Note({
-  //     title: "Learning Express",
-  //     tags: {
-  //       label: "database",
-  //     },
-  //   });
-  //   await myNote.save();
-
-  //approach-2
+try {
+    const body = await CreateUserZodSchema.parse(req.body)
+  console.log(body ,"zod body")
   const user = await User.create(body);
   res.status(201).json({
     success: true,
     message: "Note created Successfully",
-    user,
+    user:{}
   });
+} catch (error:any) {
+   res.status(400).json({
+    success: true,
+    message: error.message,
+    error
+  });
+}
 });
 userRoutes.get("/", async (req: Request, res: Response) => {
-  const users =await User.find();
+  const users = await User.find();
 
   res.status(201).json({
     success: true,
@@ -34,8 +41,8 @@ userRoutes.get("/", async (req: Request, res: Response) => {
 });
 // single id
 userRoutes.get("/:usersId", async (req: Request, res: Response) => {
-    const usersId=req.params.usersId
-  const users =await User.findById(usersId);
+  const usersId = req.params.usersId;
+  const users = await User.findById(usersId);
 
   res.status(201).json({
     success: true,
@@ -45,9 +52,11 @@ userRoutes.get("/:usersId", async (req: Request, res: Response) => {
 });
 // update id
 userRoutes.patch("/:usersId", async (req: Request, res: Response) => {
-    const usersId=req.params.usersId
-    const updateUsers=req.body
-  const users =await User.findByIdAndUpdate(usersId,updateUsers,{new:true});
+  const usersId = req.params.usersId;
+  const updateUsers = req.body;
+  const users = await User.findByIdAndUpdate(usersId, updateUsers, {
+    new: true,
+  });
 
   res.status(201).json({
     success: true,
@@ -57,9 +66,9 @@ userRoutes.patch("/:usersId", async (req: Request, res: Response) => {
 });
 // delete id
 userRoutes.delete("/:usersId", async (req: Request, res: Response) => {
-    const usersId=req.params.usersId
-    
-  const users =await User.findByIdAndDelete(usersId);
+  const usersId = req.params.usersId;
+
+  const users = await User.findByIdAndDelete(usersId);
 
   res.status(201).json({
     success: true,
