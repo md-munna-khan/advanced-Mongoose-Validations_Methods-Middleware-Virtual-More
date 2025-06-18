@@ -82,3 +82,26 @@ const userSchema = new Schema<IUser>({
 
 export const User = model("User", userSchema);
 ```
+
+## 18-2 More About Built-in validation, Making Custom Validations & Third party Validator Package
+
+![alt text](image-3.png)
+
+```js
+ email: {
+    type: String,
+    required:true,
+    trim: true,
+    lowercase:true,
+    unique:[ true,"email common hoye gese"],
+    // validate:{
+    //   validator:function(value){
+    //      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    //   },
+    //   message:function(props){
+    //     return `Email ${props.value} is not valid email`
+    //   }
+    // }
+    validate:[validator.isEmail,'invalid email sent {VALUE}']
+  },
+  ```

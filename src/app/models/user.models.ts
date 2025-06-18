@@ -1,10 +1,10 @@
 import { model, Schema } from "mongoose";
 import { IUser } from "../interfaces/user.interface";
-
+import validator from 'validator';
 const userSchema = new Schema<IUser>({
   firstName: {
     type: String,
-    required: true,
+    required:[true,"first name keno deo nai"],
     trim: true,
     minlength:[5,"first name must be 5 characters"],
     maxlength:20
@@ -22,10 +22,19 @@ const userSchema = new Schema<IUser>({
   },
   email: {
     type: String,
-    required: true,
+    required:true,
     trim: true,
     lowercase:true,
-    unique:true
+    unique:[ true,"email common hoye gese"],
+    // validate:{
+    //   validator:function(value){
+    //      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    //   },
+    //   message:function(props){
+    //     return `Email ${props.value} is not valid email`
+    //   }
+    // }
+    validate:[validator.isEmail,'invalid email sent {VALUE}']
   },
   password: {
     type: String,
@@ -34,7 +43,10 @@ const userSchema = new Schema<IUser>({
   role: {
     type: String,
     uppercase:true,
-    enum: ["USER", "ADMIN","SUPERADMIN"],
+    enum: {
+     values: ["USER", "ADMIN","SUPERADMIN"],
+     message:"role is not valid. got {VALUE}"
+    },
     default: "USER",
   },
 },{
