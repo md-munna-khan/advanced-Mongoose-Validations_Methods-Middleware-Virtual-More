@@ -14,13 +14,13 @@ const CreateUserZodSchema = z.object({
 export const userRoutes = express.Router();
 userRoutes.post("/create-user", async (req: Request, res: Response) => {
 try {
-    const body = await CreateUserZodSchema.parse(req.body)
-  console.log(body ,"zod body")
+    // const zodbody = await CreateUserZodSchema.parse(req.body)
+const body=req.body
   const user = await User.create(body);
   res.status(201).json({
     success: true,
     message: "Note created Successfully",
-    user:{}
+    user
   });
 } catch (error:any) {
    res.status(400).json({
