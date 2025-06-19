@@ -68,6 +68,8 @@ const userSchema = new Schema<IUser,UserStaticMethods,UserInstanceMethods>(
   {
     versionKey: false,
     timestamps: true,
+    toJSON:{virtuals:true},
+    toObject:{virtuals:true}
   }
 );
 userSchema.method('hashPassword',async function (plainPassword:string){
@@ -106,5 +108,8 @@ userSchema.post("findOneAndDelete",async function (doc,next){
 
   }
       next()
+})
+userSchema.virtual("fullName").get(function(){
+  return `${this.firstName} ${this.lastName}`
 })
 export const User = model<IUser,UserStaticMethods>("User", userSchema);
