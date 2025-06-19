@@ -638,7 +638,7 @@ usersRoutes.delete("/:userId", async (req: Request, res: Response) => {
 
 ## 18-9 Middleware in Mongoose: Pre and Post Hooks
 ![alt text](image-22.png)
-## 18-9 Middleware in Mongoose: Pre and Post Hooks
+
 
 [Middleware](https://mongoosejs.com/docs/middleware.html)
 
@@ -871,5 +871,164 @@ usersRoutes.post("/create-user", async (req: Request, res: Response) => {
   }
 });
 
+
+```
+
+
+
+
+
+## 18-10 Query Middleware in Mongoose
+![alt text](image-23.png)
+![alt text](image-24.png)
+![alt text](image-25.png)
+
+- Suppose a scenarios is like if the user is deleted his notes will be deleted as well. we have to do it while doing query. Means we have to use query middleware.
+- This Means The User will be deleted first then the notes will be deleted.
+
+![alt text](image-7.png)
+
+#### We have to Use `next()` in every middleware for passing fro,m one middleware to another.
+
+```js
+import { model, Model, Schema } from "mongoose";
+import {
+  IAddress,
+  IUser,
+  UserInstanceMethods,
+  UserStaticMethods,
+} from "../interfaces/user.interface";
+import validator from "validator";
+import bcrypt from "bcryptjs";
+import { Note } from "./note.model";
+
+// sub schema
+const addressSchema = new Schema<IAddress>(
+  {
+    city: { type: String },
+    street: { type: String },
+    zip: { type: Number },
+  },
+  {
+    _id: false, // as it is a SUB SCHEMA we will turn off the _id so that automated mongodb id do not get inserted.
+  }
+);
+
+// main schema
+// for instance method
+// const userSchema = new Schema<IUser, Model<IUser>, UserInstanceMethods>
+
+// for static method ans instance method combined.if we want we can remove instance method as well
+const userSchema = new Schema<IUser, UserStaticMethods, UserInstanceMethods>(
+  {
+    firstName: {
+      type: String,
+      required: [true, "First name is required."],
+      trim: true,
+      minlength: [
+        3,
+        "First name must be at least 3 characters. Got '{VALUE}'.",
+      ],
+      maxlength: [
+        10,
+        "First name must not exceed 10 characters. Got '{VALUE}'.",
+      ],
+    },
+    lastName: {
+      type: String,
+      required: [true, "Last name is required."],
+      trim: true,
+      minlength: [3, "Last name must be at least 3 characters. Got '{VALUE}'."],
+      maxlength: [
+        10,
+        "Last name must not exceed 10 characters. Got '{VALUE}'.",
+      ],
+    },
+    age: {
+      type: Number,
+      required: [true, "Age is required."],
+      min: [18, "Age must be at least 18. Got {VALUE}."],
+      max: [60, "Age must not exceed 60. Got {VALUE}."],
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required."],
+      trim: true,
+      unique: [true, "Email must be unique. Email is already in use."],
+      validate: [validator.isEmail, "Provided Email Is Not Valid"],
+    },
+    password: {
+      type: String,
+      required: [true, "Password is required."],
+      lowercase: true,
+      minlength: [6, "Password must be at least 6 characters."],
+    },
+    role: {
+      type: String,
+      uppercase: true,
+      enum: {
+        values: ["USER", "ADMIN", "SUPERADMIN"],
+        message: "'{VALUE}' is not a supported role.",
+      },
+      default: "USER",
+    },
+    address: {
+      type: addressSchema,
+    }, //using address sub schema here.
+  },
+  {
+    versionKey: false,
+    timestamps: true,
+  }
+);
+
+// creating a custom instance method for hashing password.
+userSchema.method("hashPassword", async function (plainPassword: string) {
+  const password = await bcrypt.hash(plainPassword, 10);
+  return password;
+});
+
+// creating a custom Static method for hashing password.
+userSchema.static("hashPassword", async function (plainPassword: string) {
+  const password = await bcrypt.hash(plainPassword, 10);
+  return password;
+});
+
+// pre hook for hashing (instead of static and instance)
+userSchema.pre("save", async function (next) {
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+userSchema.post("save", async function (doc, next) {
+  console.log(`${doc.email} has been saved`);
+  next();
+});
+
+//query middleware pre
+
+userSchema.pre("find", async function (next) {
+  console.log("Wow Pre Query Middleware");
+  next();
+});
+
+//query middleware post
+userSchema.post("findOneAndDelete", async function (doc, next) {
+  if (doc) {
+    console.log(doc);
+    await Note.deleteMany({ user: doc._id });
+  }
+  next();
+});
+
+//
+
+// method-1 (specialized for Instance method )
+// export const User = model<IUser, Model<IUser, {}, UserInstanceMethods>>(
+//   "User",
+//   userSchema
+// );
+
+// method-2 (specialized for Instance method as well )
+export const User = model<IUser, UserStaticMethods>("User", userSchema);
 
 ```

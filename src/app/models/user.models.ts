@@ -2,6 +2,7 @@ import { Model, model, Schema } from "mongoose";
 import { IAddress, IUser, UserInstanceMethods, UserStaticMethods } from "../interfaces/user.interface";
 import validator from "validator";
 import bcrypt from "bcryptjs"
+import { Note } from "./notes.models";
 const addressSchema = new Schema<IAddress>({
   city: String,
   street: String,
@@ -78,13 +79,32 @@ userSchema.static('hashPassword',async function (plainPassword:string){
   const password = await bcrypt.hash(plainPassword,10)
 return password
 })
+// document middleware
 userSchema.pre("save",async function(){
   console.log("inside pre save hook");
   this.password =await bcrypt.hash(this.password,10)
   console.log(this)
 })
 
-userSchema.post('save', function(doc) {
+// document middleware
+userSchema.post('save', function(doc,next) {
   console.log('%s has been saved', doc._id);
+  next()
 });
+// query middleware
+userSchema.pre("find",function(next){
+ console.log("inside pre find hook")
+  next()
+}) 
+
+// post hook
+// query middleware
+userSchema.post("findOneAndDelete",async function (doc,next){
+  if(doc){
+    console.log(doc);
+    await Note.deleteMany({userId:doc._id})
+
+  }
+      next()
+})
 export const User = model<IUser,UserStaticMethods>("User", userSchema);
