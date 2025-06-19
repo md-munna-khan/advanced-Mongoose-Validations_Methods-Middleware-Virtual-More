@@ -272,3 +272,8 @@ userId:Types.ObjectId
    ![alt text](image-11.png)
   ![alt text](image-7.png)
 
+## 18-6 Built-in and Custom Instance Methods in Mongoose
+
+![alt text](image-13.png)
+![alt text](image-14.png)
+
