@@ -367,4 +367,7 @@ export const User = model("User", userSchema);
 ![alt text](image-18.png)
 
 
-
+## 18-8 Built-in and Custom Static Methods in Mongoose
+![alt text](image-19.png)
+![alt text](image-20.png)
+![alt text](image-21.png)
