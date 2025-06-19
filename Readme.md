@@ -1154,3 +1154,68 @@ userSchema.virtual("fullName").get(function(){
 })
 export const User = model<IUser,UserStaticMethods>("User", userSchema);
 ```
+
+## 18-12 Filter, Sort, Skip, Limit in Mongoose And Module Summary
+![alt text](image-29.png)
+- specific user query by email
+```js
+userRoutes.get("/", async (req: Request, res: Response) => {
+  const userEmail= req.query.email? req.query.email:"";
+  console.log(userEmail)
+  let users =[]
+
+  if(userEmail){
+     users = await User.find({email:userEmail});
+  }else{
+     users = await User.find();
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Note created Successfully",
+    users,
+  });
+});
+```
+![alt text](image-30.png)
+#####  sort
+![alt text](image-31.png)
+```js
+ users = await User.find().sort({"email":"asc"})
+ users = await User.find().sort({"email":1})
+ ```
+
+ #### skipping
+ ```js
+  users = await User.find().skip(6)
+```
+```js
+// ====================limiting======================
+ users = await User.find().limit(2)
+ ```
+
+ ```js
+ userRoutes.get("/", async (req: Request, res: Response) => {
+  const userEmail= req.query.email? req.query.email:"";
+  console.log(userEmail)
+  let users =[]
+//======================filtering========================
+  // if(userEmail){
+  //    users = await User.find({email:userEmail});
+  // }else{
+  //    users = await User.find();
+  // }
+// =====================sorting====================
+//  users = await User.find().sort({"email":"asc"})
+//  users = await User.find().sort({"email":1})
+// ====================skipping======================
+//  users = await User.find().skip(6)
+// ====================limiting======================
+ users = await User.find().limit(2)
+  res.status(201).json({
+    success: true,
+    message: "Note created Successfully",
+    users,
+  });
+});
+```
