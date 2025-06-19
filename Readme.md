@@ -635,3 +635,241 @@ usersRoutes.delete("/:userId", async (req: Request, res: Response) => {
 });
 
 ```
+
+## 18-9 Middleware in Mongoose: Pre and Post Hooks
+![alt text](image-22.png)
+## 18-9 Middleware in Mongoose: Pre and Post Hooks
+
+[Middleware](https://mongoosejs.com/docs/middleware.html)
+
+- Middleware can operate in two state.(Middlewares are also called hooks)
+  1. Before doing Operation (pre hook)
+  2. After doing Operation (post Hook)
+- Validation is one kind of pre hook middleware.
+
+#### Types Of Middleware
+
+- we get 4 types of mongoose middleware
+
+  1. **Document Middleware**
+     Works when doing these operations :
+
+  - validate
+  - save
+  - updateOne
+  - deleteOne
+  - init (note: init hooks are synchronous)
+
+  2. **Model Middleware**
+     Works when doing these operations :
+
+  - bulkWrite
+  - createCollection
+  - insertMany
+
+  3. **Aggregate Middleware**
+
+     Works when doing these operations :
+
+  - aggregate
+
+  1. **Query Middleware**
+     Works when doing these operations :
+
+  - count
+  - countDocuments
+  - deleteMany
+  - deleteOne
+  - estimatedDocumentCount
+  - find
+  - findOne
+  - findOneAndDelete
+  - findOneAndReplace
+  - findOneAndUpdate
+  - replaceOne
+  - updateOne
+  - updateMany
+  - validate
+
+#### Lets Make a Custom Pre and Post Hook For Our Project
+
+- We will use pre hook for hashing a password before saving a password.
+- Hooks are written in Model File
+
+```js
+import { model, Model, Schema } from "mongoose";
+import {
+  IAddress,
+  IUser,
+  UserInstanceMethods,
+  UserStaticMethods,
+} from "../interfaces/user.interface";
+import validator from "validator";
+import bcrypt from "bcryptjs";
+
+// sub schema
+const addressSchema = new Schema<IAddress>(
+  {
+    city: { type: String },
+    street: { type: String },
+    zip: { type: Number },
+  },
+  {
+    _id: false, // as it is a SUB SCHEMA we will turn off the _id so that automated mongodb id do not get inserted.
+  }
+);
+
+// main schema
+// for instance method
+// const userSchema = new Schema<IUser, Model<IUser>, UserInstanceMethods>
+
+// for static method ans instance method combined.if we want we can remove instance method as well
+const userSchema = new Schema<IUser, UserStaticMethods, UserInstanceMethods>(
+  {
+    firstName: {
+      type: String,
+      required: [true, "First name is required."],
+      trim: true,
+      minlength: [
+        3,
+        "First name must be at least 3 characters. Got '{VALUE}'.",
+      ],
+      maxlength: [
+        10,
+        "First name must not exceed 10 characters. Got '{VALUE}'.",
+      ],
+    },
+    lastName: {
+      type: String,
+      required: [true, "Last name is required."],
+      trim: true,
+      minlength: [3, "Last name must be at least 3 characters. Got '{VALUE}'."],
+      maxlength: [
+        10,
+        "Last name must not exceed 10 characters. Got '{VALUE}'.",
+      ],
+    },
+    age: {
+      type: Number,
+      required: [true, "Age is required."],
+      min: [18, "Age must be at least 18. Got {VALUE}."],
+      max: [60, "Age must not exceed 60. Got {VALUE}."],
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required."],
+      trim: true,
+      unique: [true, "Email must be unique. Email is already in use."],
+      validate: [validator.isEmail, "Provided Email Is Not Valid"],
+    },
+    password: {
+      type: String,
+      required: [true, "Password is required."],
+      lowercase: true,
+      minlength: [6, "Password must be at least 6 characters."],
+    },
+    role: {
+      type: String,
+      uppercase: true,
+      enum: {
+        values: ["USER", "ADMIN", "SUPERADMIN"],
+        message: "'{VALUE}' is not a supported role.",
+      },
+      default: "USER",
+    },
+    address: {
+      type: addressSchema,
+    }, //using address sub schema here.
+  },
+  {
+    versionKey: false,
+    timestamps: true,
+  }
+);
+
+// creating a custom instance method for hashing password.
+userSchema.method("hashPassword", async function (plainPassword: string) {
+  const password = await bcrypt.hash(plainPassword, 10);
+  return password;
+});
+
+// creating a custom Static method for hashing password.
+userSchema.static("hashPassword", async function (plainPassword: string) {
+  const password = await bcrypt.hash(plainPassword, 10);
+  return password;
+});
+
+// pre hook for hashing (instead of static and instance)
+userSchema.pre("save", async function () {
+  this.password = await bcrypt.hash(this.password, 10);
+});
+userSchema.post("save", async function (doc) {
+  console.log(`${doc.email} has been saved`);
+});
+
+export const User = model<IUser, UserStaticMethods>("User", userSchema);
+
+```
+
+- Controller file update
+
+```js
+import { Request, Response } from "express";
+// import bcrypt from "bcryptjs";
+import express from "express";
+import { User } from "../models/user.model";
+import { z } from "zod";
+
+export const usersRoutes = express.Router();
+
+const createUserZodSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  age: z.number(),
+  email: z.string(),
+  password: z.string(),
+  role: z.string().optional(),
+});
+usersRoutes.post("/create-user", async (req: Request, res: Response) => {
+  try {
+    const zodBody = await createUserZodSchema.parseAsync(req.body);
+    const body = req.body;
+    // console.log("Zod Body :", body);
+    // const user = await User.create(body);
+    // const password = await bcrypt.hash(body.password, 10);
+    // console.log(password);
+    // body.password = password;
+
+    // another method of creating a user
+
+    // Builtin and custom instance method
+
+    // const user = new User(body);
+    // const password = await user.hashPassword(body.password);
+    // console.log(password);
+    // user.password = password;
+    // await user.save(); // here .save() function is a instance method
+
+    //  Builtin and Static Method
+
+    // const password = await User.hashPassword(body.password);
+    // body.password = password;
+    const user = await User.create(body);
+
+    res.status(201).json({
+      success: true,
+      message: "Users Created Successfully !",
+      user,
+    });
+  } catch (error: any) {
+    console.log(error);
+    res.status(400).json({
+      success: false,
+      message: error.message,
+      error,
+    });
+  }
+});
+
+
+```
