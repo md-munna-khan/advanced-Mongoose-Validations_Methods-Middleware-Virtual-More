@@ -239,3 +239,36 @@ const userSchema = new Schema<IUser>(
 export const User = model("User", userSchema);
 ```
   ![alt text](image-6.png)
+
+  ## 18-5 Referencing and Population in Mongoose
+  
+  - **step1:** define in interface
+ ```js
+  import { Types } from "mongoose";
+export interface notes{
+title:string,
+content:string,
+category:string,
+pinned:boolean,
+tags:string,
+userId:Types.ObjectId
+// use:user
+} 
+```
+  ![alt text](image-8.png)
+   - **step2:** add in schema
+   - there ref name same to model declired name 
+   ![alt text](image-10.png)
+   ```js
+   // use:user
+    userId:{
+    type:Schema.Types.ObjectId,
+    ref:"User",
+    required:true
+  }
+  ```
+   ![alt text](image-9.png)
+    - **step2:** final output
+   ![alt text](image-11.png)
+  ![alt text](image-7.png)
+
