@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { User } from "../models/user.models";
 import { z } from "zod";
-
+import bcrypt from "bcryptjs";
 const CreateUserZodSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
@@ -13,26 +13,58 @@ const CreateUserZodSchema = z.object({
 
 export const userRoutes = express.Router();
 userRoutes.post("/create-user", async (req: Request, res: Response) => {
-try {
+  try {
     // const zodbody = await CreateUserZodSchema.parse(req.body)
-const body=req.body
-  const user = await User.create(body);
-  res.status(201).json({
-    success: true,
-    message: "Note created Successfully",
-    user
-  });
-} catch (error:any) {
-   res.status(400).json({
-    success: true,
-    message: error.message,
-    error
-  });
-}
-});
-userRoutes.get("/", async (req: Request, res: Response) => {
-  const users = await User.find();
+    const body = req.body;
+    // const password = await bcrypt.hash(body.password,10)
+    // console.log(password)
+    // body.password =password
+    // built it and custom instance methods
+ 
+    //========================= this in instance method==============================
+    // const user = new User(body);
+    // user.hashPassword(body.password);
+    // const password = await user.hashPassword(body.password);
+    // user.password = password;
+    // await user.save();
+     //=================== built it and custom static methods=====================
+// const password = await User.hashPassword(body.password)
+// console.log(password, "static")
+// body.password = password
 
+        const user = await User.create(body);
+    res.status(201).json({
+      success: true,
+      message: "Note created Successfully",
+      user,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: true,
+      message: error.message,
+      error,
+    });
+  }
+});
+
+// get all user
+userRoutes.get("/", async (req: Request, res: Response) => {
+  const userEmail= req.query.email? req.query.email:"";
+  console.log(userEmail)
+  let users =[]
+//======================filtering========================
+  // if(userEmail){
+  //    users = await User.find({email:userEmail});
+  // }else{
+  //    users = await User.find();
+  // }
+// =====================sorting====================
+//  users = await User.find().sort({"email":"asc"})
+//  users = await User.find().sort({"email":1})
+// ====================skipping======================
+//  users = await User.find().skip(6)
+// ====================limiting======================
+ users = await User.find().limit(2)
   res.status(201).json({
     success: true,
     message: "Note created Successfully",
@@ -68,7 +100,9 @@ userRoutes.patch("/:usersId", async (req: Request, res: Response) => {
 userRoutes.delete("/:usersId", async (req: Request, res: Response) => {
   const usersId = req.params.usersId;
 
-  const users = await User.findByIdAndDelete(usersId);
+  // const users = await User.findByIdAndDelete(usersId);
+  const users = await User.findOneAndDelete({_id:usersId});
+
 
   res.status(201).json({
     success: true,
